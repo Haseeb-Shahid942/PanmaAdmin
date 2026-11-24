@@ -4,6 +4,7 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 import mysqlPool from '@/lib/mysql';
+import { parseTags } from '@/lib/tags';
 
 export async function GET(req, context) {
   const { params } = await context;   // ✅ Fix: await context
@@ -19,7 +20,7 @@ export async function GET(req, context) {
     conn = await mysqlPool.getConnection();
     const [rows] = await conn.query(
       `SELECT id, author_id, title, slug, excerpt, content_html, featured_image_url,
-              JSON_EXTRACT(tags, '$') AS tags,
+              tags,
               status, seo_title, seo_description, canonical_url, fileid, published_at,
               created_at, updated_at
        FROM blogs WHERE id=? LIMIT 1`,
@@ -40,7 +41,7 @@ export async function GET(req, context) {
       ok: true,
       blog: {
         ...blog,
-        tags: blog.tags ? JSON.parse(blog.tags) : [],
+        tags: parseTags(blog.tags),
         category_ids: cats.map((x) => x.category_id),
       },
     });

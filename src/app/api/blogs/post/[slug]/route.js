@@ -4,6 +4,7 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 import mysqlPool from '@/lib/mysql';
+import { parseTags } from '@/lib/tags';
 
 // If you need CORS, uncomment:
 // const cors = { 'Access-Control-Allow-Origin': 'http://localhost:5173', 'Access-Control-Allow-Methods': 'GET,OPTIONS' };
@@ -22,7 +23,7 @@ export async function GET(_req, { params }) {
     // 1) fetch blog by slug
     const [rows] = await conn.query(
       `SELECT id, author_id, title, slug, excerpt, content_html, featured_image_url,
-              JSON_EXTRACT(tags, '$') AS tags,
+              tags,
               status, seo_title, seo_description, canonical_url, published_at,
               created_at, updated_at
        FROM blogs
@@ -49,7 +50,7 @@ export async function GET(_req, { params }) {
       ok: true,
       blog: {
         ...blog,
-        tags: blog.tags ? JSON.parse(blog.tags) : [],
+        tags: parseTags(blog.tags),
         categories: cats,                 // return full {id,name} objects
         category_ids: cats.map((x) => x.id), // and ids if you still want them
       },

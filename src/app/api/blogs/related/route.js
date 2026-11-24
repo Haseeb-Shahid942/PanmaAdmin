@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 import mysqlPool from '@/lib/mysql';
+import { parseTags } from '@/lib/tags';
 
 export async function GET(req) {
   const { searchParams } = new URL(req.url);
@@ -24,7 +25,7 @@ export async function GET(req) {
 
     // 1) Load base post signals: categories + tags
     const [[base]] = await conn.query(
-      `SELECT id, JSON_EXTRACT(tags, '$') AS tags
+      `SELECT id, tags
          FROM blogs
         WHERE id = ?
         LIMIT 1`,
@@ -40,7 +41,7 @@ export async function GET(req) {
     );
     const baseCategoryIds = baseCats.map(x => Number(x.category_id)).filter(n => Number.isInteger(n) && n > 0);
 
-    const baseTags = base.tags ? (() => { try { return JSON.parse(base.tags); } catch { return []; } })() : [];
+    const baseTags = parseTags(base.tags);
 
     // If no signals, nothing to relate on
     if ((!baseCategoryIds || baseCategoryIds.length === 0) && (!baseTags || baseTags.length === 0)) {
